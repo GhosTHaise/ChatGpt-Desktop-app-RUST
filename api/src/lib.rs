@@ -2,7 +2,6 @@ use std::{string, collections::HashMap};
 
 use reqwest::{Url, Response};
 use serde::{Serialize,Deserialize};
-use serde_derive::{Serialize, Deserialize};
 use exitfailure::{self, ExitFailure};
 struct Api<'a>{
     pub url : &'a String
