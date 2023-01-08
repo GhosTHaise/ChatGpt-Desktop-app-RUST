@@ -1,5 +1,5 @@
 use confy;
-use eframe::egui::{Context, TopBottomPanel,TextEdit};
+use eframe::egui::{Context, TopBottomPanel,TextEdit, output, self};
 use serde::{Serialize,Deserialize};
 
 #[derive(Serialize,Deserialize)]
@@ -17,7 +17,8 @@ impl Default for HeadlinesConfig{
 
 pub struct Headlines{
     pub config : HeadlinesConfig,
-    pub api_key_initialized : bool
+    pub api_key_initialized : bool,
+    pub search : String
 }
 
 impl Headlines {
@@ -25,15 +26,25 @@ impl Headlines {
         let config : HeadlinesConfig = confy::load("headlines").unwrap_or_default();
         Headlines { 
             api_key_initialized: !config.api_key.is_empty(),
-            config
+            config,
+            search: String::from("Ask GhosT ..."),
         }
     }
 
 }
-pub fn render_message_bottom(ctx : &Context)-> () {
+
+
+pub fn render_message_bottom(ctx : &Context, content : &mut String)-> () {
     TopBottomPanel::bottom("message").show(ctx , |ui|{
+        
         ui.horizontal(|ui|{
-            let mess = ui.add(TextEdit::singleline(&mut "Ask GhosT ... "));
+            let mess = ui.add_sized(ui.available_size(),TextEdit::singleline(content ));
+            if mess.changed(){
+                //println!("{:?}",mess);
+            }
+            if(mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter)){
+
+            }
         });
     });
 }   
