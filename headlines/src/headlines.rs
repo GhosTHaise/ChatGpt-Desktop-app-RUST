@@ -1,4 +1,5 @@
 use confy;
+use eframe::egui::{Context, TopBottomPanel,TextEdit};
 use serde::{Serialize,Deserialize};
 
 #[derive(Serialize,Deserialize)]
@@ -27,8 +28,15 @@ impl Headlines {
             config
         }
     }
-}
 
+}
+pub fn render_message_bottom(ctx : &Context)-> () {
+    TopBottomPanel::bottom("message").show(ctx , |ui|{
+        ui.horizontal(|ui|{
+            let mess = ui.add(TextEdit::singleline(&mut "Ask GhosT ... "));
+        });
+    });
+}   
 pub struct NewBotResponse{
     bot : String
 }
