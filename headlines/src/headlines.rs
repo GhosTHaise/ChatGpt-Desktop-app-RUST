@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use confy;
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui}, epaint::FontId};
 use serde::{Serialize,Deserialize};
@@ -18,7 +20,7 @@ impl Default for HeadlinesConfig{
 pub struct Headlines{
     pub config : HeadlinesConfig,
     pub api_key_initialized : bool,
-    pub search : String
+    pub search :  RefCell<String>
 }
 
 impl Headlines {
@@ -27,9 +29,49 @@ impl Headlines {
         Headlines { 
             api_key_initialized: !config.api_key.is_empty(),
             config,
-            search: String::from("Ask GhosT ..."),
+            search: RefCell::new("Ask GhosT ...".to_string()),
         }
     }
+
+    pub fn render_new_message(&self,is_bot : bool,content : String,ui : &mut eframe::egui::Ui){
+        let mut label = Label::new(RichText::new(content).text_style(egui::TextStyle::Body));
+        ui.add(label);
+    }
+    
+    pub fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
+        TopBottomPanel::bottom("message").show(ctx , |ui|{
+            let mut style = (*ctx.style()).clone();
+            //Adjust global font size
+            style.text_styles = [
+            (TextStyle::Heading,FontId::new(32.0, eframe::epaint::FontFamily::Proportional)), 
+            (TextStyle::Body,FontId::new(18.0, eframe::epaint::FontFamily::Proportional)),
+            (TextStyle::Monospace,FontId::new(14.0, eframe::epaint::FontFamily::Proportional)),
+            (TextStyle::Button,FontId::new(14.0, eframe::epaint::FontFamily::Proportional)),
+            (TextStyle::Small,FontId::new(10.0, eframe::epaint::FontFamily::Proportional))   
+            ].into();
+            ctx.set_style(style);
+            ui.horizontal(|ui|{
+                ui.set_height(50.);
+                let mess = ui.add_sized(
+                        ui.available_size(),
+                          TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Body)
+                        );
+                if mess.changed(){
+                    //println!("{:?}",mess);
+                }
+                if mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                    println!("{}",content);
+    
+                    //new Message
+                    self.render_new_message(false, content.to_string(), parrent_ui);
+                    //clear text Edit -> search
+                    clear_intput(content);
+                }
+            });
+            ui.add_space(1.);
+        });
+    }   
+    
 
 }
 
@@ -49,44 +91,6 @@ fn loader(curent_text : &str,label : egui::Label){
         i = i + 1;
     }
 }
-pub fn render_new_message(is_bot : bool,content : String,ui : &mut eframe::egui::Ui){
-    let mut label = Label::new(RichText::new(content).text_style(egui::TextStyle::Body));
-    ui.add(label);
-}
-
-pub fn render_message_bottom(ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
-    TopBottomPanel::bottom("message").show(ctx , |ui|{
-        let mut style = (*ctx.style()).clone();
-        //Adjust global font size
-        style.text_styles = [
-        (TextStyle::Heading,FontId::new(32.0, eframe::epaint::FontFamily::Proportional)), 
-        (TextStyle::Body,FontId::new(18.0, eframe::epaint::FontFamily::Proportional)),
-        (TextStyle::Monospace,FontId::new(14.0, eframe::epaint::FontFamily::Proportional)),
-        (TextStyle::Button,FontId::new(14.0, eframe::epaint::FontFamily::Proportional)),
-        (TextStyle::Small,FontId::new(10.0, eframe::epaint::FontFamily::Proportional))   
-        ].into();
-        ctx.set_style(style);
-        ui.horizontal(|ui|{
-            ui.set_height(50.);
-            let mess = ui.add_sized(
-                    ui.available_size(),
-                      TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Body)
-                    );
-            if mess.changed(){
-                //println!("{:?}",mess);
-            }
-            if mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
-                println!("{}",content);
-
-                //new Message
-                render_new_message(false, content.to_string(), parrent_ui);
-                //clear text Edit -> search
-                clear_intput(content);
-            }
-        });
-        ui.add_space(1.);
-    });
-}   
 
 
 #[derive(Serialize,Deserialize)]
