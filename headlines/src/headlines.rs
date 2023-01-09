@@ -33,19 +33,25 @@ impl Headlines {
 
 }
 
+fn clear_intput(mut value : &mut String){
+    value.clear();
+}
 
 pub fn render_message_bottom(ctx : &Context, content : &mut String)-> () {
     TopBottomPanel::bottom("message").show(ctx , |ui|{
         
         ui.horizontal(|ui|{
-            let mess = ui.add_sized(ui.available_size(),TextEdit::singleline(content ));
+            ui.set_height(50.);
+            let mess = ui.add_sized(ui.available_size(),TextEdit::singleline(content ).hint_text("Ask GhosT ...").text_style(egui::TextStyle::Body));
             if mess.changed(){
                 //println!("{:?}",mess);
             }
-            if(mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter)){
-
+            if mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                println!("{}",content);
+                clear_intput(content);
             }
         });
+        ui.add_space(1.);
     });
 }   
 pub struct NewBotResponse{
