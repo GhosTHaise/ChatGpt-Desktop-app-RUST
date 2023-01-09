@@ -1,5 +1,5 @@
 use confy;
-use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText}, epaint::FontId};
+use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui}, epaint::FontId};
 use serde::{Serialize,Deserialize};
 
 #[derive(Serialize,Deserialize)]
@@ -37,7 +37,7 @@ fn clear_intput(mut value : &mut String){
     value.clear();
 }
 
-fn loader(curentText : &str,label : egui::Label){
+fn loader(curent_text : &str,label : egui::Label){
     let mut i = 0;
     loop{
         if(i != 4){
@@ -54,7 +54,7 @@ pub fn render_new_message(is_bot : bool,content : String,ui : &mut eframe::egui:
     ui.add(label);
 }
 
-pub fn render_message_bottom(ctx : &Context, content : &mut String)-> () {
+pub fn render_message_bottom(ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
     TopBottomPanel::bottom("message").show(ctx , |ui|{
         let mut style = (*ctx.style()).clone();
         //Adjust global font size
@@ -77,12 +77,19 @@ pub fn render_message_bottom(ctx : &Context, content : &mut String)-> () {
             }
             if mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
                 println!("{}",content);
+
+                //new Message
+                render_new_message(false, content.to_string(), parrent_ui);
+                //clear text Edit -> search
                 clear_intput(content);
             }
         });
         ui.add_space(1.);
     });
 }   
+
+
+#[derive(Serialize,Deserialize)]
 pub struct NewBotResponse{
     bot : String
 }
