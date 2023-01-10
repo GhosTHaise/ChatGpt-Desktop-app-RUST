@@ -1,8 +1,12 @@
 use std::{cell::RefCell, ops::Deref};
 
 use confy;
-use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui}, epaint::FontId};
+use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32}};
 use serde::{Serialize,Deserialize};
+
+const WHITE : Color32 = Color32::from_rgb(255, 255, 255);
+const DARK_LIGHT : Color32 = Color32::from_rgb(52, 53, 65);
+const PADDING : f32 = 5.0;
 
 #[derive(Serialize,Deserialize)]
 pub struct HeadlinesConfig{
@@ -63,14 +67,22 @@ impl Headlines {
         }
     }
 
-    pub fn render_new_message(&self,ui : &mut eframe::egui::Ui){
+    pub fn render_new_message(&self,parrent_ui : &mut eframe::egui::Ui){
         let data = self.dialog.borrow();
         for m in data.deref() {
             let textual_content = m.borrow();
-            let mut label = Label::new(RichText::new(format!("{}",textual_content.expose)).text_style(egui::TextStyle::Body));
-            ui.add(label);
-        }
-        
+            let mut label = Label::new(
+                RichText::new(format!("{}",textual_content.expose))
+                .text_style(egui::TextStyle::Body));
+            parrent_ui.add_space(10.);
+                //ajout
+                parrent_ui.with_layout(egui::Layout::right_to_left(), |ui|{
+                     ui.add(label);
+                });
+                //end -> ajout
+            parrent_ui.add_space(PADDING);
+            parrent_ui.add(egui::Separator::default());
+            }
     }
     
     pub fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
@@ -86,26 +98,31 @@ impl Headlines {
             ].into();
             ctx.set_style(style);
             ui.horizontal(move |ui|{
-                let mess = ui.add_sized(
+                ui.vertical_centered(|ui|{
+                    let mess = ui.add_sized(
                         ui.available_size(),
                           TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Heading)
                         );
-                if mess.changed(){
-                    //println!("{:?}",mess);
-                }
-                if mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
-                    println!("{}",content);
-                    
-                    
-                    self.dialog.borrow_mut().push(
-                        RefCell::new(Userbot{
-                            is_bot: false,
-                            expose: content.to_string(),
-                        })
-                    );
-                    //clear text Edit -> search
-                    clear_intput(content);
-                }
+                        
+                        if mess.changed(){
+                            //println!("{:?}",mess);
+                        }
+                        if mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+                            println!("{}",content);
+                            
+                            
+                            self.dialog.borrow_mut().push(
+                                RefCell::new(Userbot{
+                                    is_bot: false,
+                                    expose: content.to_string(),
+                                })
+                            );
+        
+                            //clear text Edit -> search
+                            clear_intput(content);
+                        }
+                });
+                
             });
             ui.add_space(1.);
         });
