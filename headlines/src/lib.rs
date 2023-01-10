@@ -13,9 +13,9 @@ impl App for Headlines{
            let mut scroll_area_ui : &mut Ui;
            ScrollArea::vertical().show(ui, | ui |{
                 ui.add(Label::new(RichText::new("Hello")));
-                self.render_message_bottom(ctx,&mut self.search.borrow_mut(), ui);
+                self.render_new_message(ui);
            });
-           
+           self.render_message_bottom(ctx,&mut self.search.borrow_mut(), ui);
        });
     }
 

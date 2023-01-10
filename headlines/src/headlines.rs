@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, ops::Deref};
 
 use confy;
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui}, epaint::FontId};
@@ -15,9 +15,9 @@ pub struct NewBotResponse{
     bot : String
 }
 
-pub struct user2bot{
-    is_bot : bool,
-    expose : String
+pub struct Userbot{
+    pub is_bot : bool,
+    pub expose : String
 }
 
 impl Default for HeadlinesConfig{
@@ -49,7 +49,7 @@ pub struct Headlines{
     pub config : HeadlinesConfig,
     pub api_key_initialized : bool,
     pub search :  RefCell<String>,
-    pub dialog : Vec<RefCell<String>>
+    pub dialog : RefCell<Vec<RefCell<Userbot>>>
 }
 
 impl Headlines {
@@ -59,17 +59,22 @@ impl Headlines {
             api_key_initialized: !config.api_key.is_empty(),
             config,
             search: RefCell::new("Ask GhosT ...".to_string()),
-            dialog: vec![],
+            dialog: RefCell::new(vec![]),
         }
     }
 
-    pub fn render_new_message(&self,is_bot : bool,content : String,ui : &mut eframe::egui::Ui){
-        let mut label = Label::new(RichText::new(content).text_style(egui::TextStyle::Body));
-        ui.add(label);
+    pub fn render_new_message(&self,ui : &mut eframe::egui::Ui){
+        let data = self.dialog.borrow();
+        for m in data.deref() {
+            let textual_content = m.borrow();
+            let mut label = Label::new(RichText::new(format!("{}",textual_content.expose)).text_style(egui::TextStyle::Body));
+            ui.add(label);
+        }
+        
     }
     
     pub fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
-        TopBottomPanel::bottom("message").show(ctx , |ui|{
+        TopBottomPanel::bottom("message").show(ctx , move |ui|{
             let mut style = (*ctx.style()).clone();
             //Adjust global font size
             style.text_styles = [
@@ -80,20 +85,24 @@ impl Headlines {
             (TextStyle::Small,FontId::new(10.0, eframe::epaint::FontFamily::Proportional))   
             ].into();
             ctx.set_style(style);
-            ui.horizontal(|ui|{
-                ui.set_height(50.);
+            ui.horizontal(move |ui|{
                 let mess = ui.add_sized(
                         ui.available_size(),
-                          TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Body)
+                          TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Heading)
                         );
                 if mess.changed(){
                     //println!("{:?}",mess);
                 }
                 if mess.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
                     println!("{}",content);
-    
-                    //new Message
-                    self.render_new_message(false, content.to_string(), parrent_ui);
+                    
+                    
+                    self.dialog.borrow_mut().push(
+                        RefCell::new(Userbot{
+                            is_bot: false,
+                            expose: content.to_string(),
+                        })
+                    );
                     //clear text Edit -> search
                     clear_intput(content);
                 }
