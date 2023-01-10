@@ -7,6 +7,7 @@ pub use headlines::{Headlines};
 
 impl App for Headlines{
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &eframe::epi::Frame) {
+        ctx.request_repaint();
         egui::CentralPanel::default().show(ctx, |ui| {
            ui.heading("Hello World!");
            let mut scroll_area_ui : &mut Ui;

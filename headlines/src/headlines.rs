@@ -10,6 +10,15 @@ pub struct HeadlinesConfig{
     api_key : String
 }
 
+#[derive(Serialize,Deserialize)]
+pub struct NewBotResponse{
+    bot : String
+}
+
+pub struct user2bot{
+    is_bot : bool,
+    expose : String
+}
 
 impl Default for HeadlinesConfig{
     fn default() -> Self {
@@ -17,10 +26,30 @@ impl Default for HeadlinesConfig{
     }
 }
 
+//Method
+fn clear_intput(mut value : &mut String){
+    value.clear();
+}
+
+fn loader(curent_text : &str,label : egui::Label){
+    let mut i = 0;
+    loop{
+        if(i != 4){
+            //label.set_text(format!("{}.",curentText));
+        }else{
+            i = 0;
+        }
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        i = i + 1;
+    }
+}
+
+//end Method
 pub struct Headlines{
     pub config : HeadlinesConfig,
     pub api_key_initialized : bool,
-    pub search :  RefCell<String>
+    pub search :  RefCell<String>,
+    pub dialog : Vec<RefCell<String>>
 }
 
 impl Headlines {
@@ -30,6 +59,7 @@ impl Headlines {
             api_key_initialized: !config.api_key.is_empty(),
             config,
             search: RefCell::new("Ask GhosT ...".to_string()),
+            dialog: vec![],
         }
     }
 
@@ -75,25 +105,4 @@ impl Headlines {
 
 }
 
-fn clear_intput(mut value : &mut String){
-    value.clear();
-}
 
-fn loader(curent_text : &str,label : egui::Label){
-    let mut i = 0;
-    loop{
-        if(i != 4){
-            //label.set_text(format!("{}.",curentText));
-        }else{
-            i = 0;
-        }
-        std::thread::sleep(std::time::Duration::from_secs(1));
-        i = i + 1;
-    }
-}
-
-
-#[derive(Serialize,Deserialize)]
-pub struct NewBotResponse{
-    bot : String
-}
