@@ -1,6 +1,7 @@
 use std::{cell::RefCell, ops::{Deref, DerefMut}, process::Output, future::Future};
 
 use confy;
+use std::thread;
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
 use api::*;
@@ -65,7 +66,7 @@ impl Headlines {
             config,
             search: RefCell::new("".to_string()),
             dialog: RefCell::new(vec![]),
-            fetch_cursor : Api::new("")
+            fetch_cursor : Api::new("https://ghost-chatgpt.onrender.com")
         }
     }
 
@@ -140,17 +141,21 @@ impl Headlines {
                             self.add_new_dialog(false,content.to_string());
                             //Loader
                             //fetch_api
-
-                            let bot_response = self.fetch_cursor.fetch(content.to_string());
+                            /* -> implement to thread */let response = self.fetch_cursor.asynchrounous_fetch(content.to_string());
+                            thread::spawn(move||async{
+                                
+                            });
+                            /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
                                 Ok(r) => {
                                     self.add_new_dialog(true,r.bot)
                                 }
                                 Err(e) => {
+                                    println!("{:?}",e);
                                     self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct reponse"))
                                 }
-                            }
+                            } */
                             //clear text Edit -> search
                             clear_intput(content);
                         }

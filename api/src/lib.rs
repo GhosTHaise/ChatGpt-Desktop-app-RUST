@@ -8,7 +8,7 @@ pub struct Api{
     url : String
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct Payload {
     pub bot : String
 }
@@ -41,14 +41,23 @@ impl Api {
 
     pub fn fetch(&self,prompt : String) -> Result<Payload,ExitFailure>{
         let reqwest = ureq::post(&self.url)
+        .set("Content-Type","application/json")
+        .set("Connection","keep-alive")
         .send_json(
             ureq::json!({
                 "propmt" : prompt
             })
         )?;
+        //parameter reqwest
+        //end -> parameter
         let response : Payload = reqwest.into_json()?;
-        
+        println!("{:?}",response);
         Ok(response)
+    }
+    #[cfg(test)]
+    fn get_status(){
+        
     }
         
 }
+
