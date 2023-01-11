@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::{Deref, DerefMut}, process::Output, future::Future};
+use std::{cell::RefCell, ops::{Deref, DerefMut}, process::Output, future::Future, sync::mpsc::{Receiver, Sender}};
 
 use confy;
 use std::thread;
@@ -55,7 +55,9 @@ pub struct Headlines{
     pub api_key_initialized : bool,
     pub search :  RefCell<String>,
     pub dialog : RefCell<Vec<RefCell<Userbot>>>,
-    pub fetch_cursor : Api
+    pub fetch_cursor : Api,
+    pub api_rx : Option<Receiver<Payload>>,
+    pub api_tx : Option<Sender<Payload>>
 }
 
 impl Headlines {
@@ -66,7 +68,9 @@ impl Headlines {
             config,
             search: RefCell::new("".to_string()),
             dialog: RefCell::new(vec![]),
-            fetch_cursor : Api::new("https://ghost-chatgpt.onrender.com")
+            fetch_cursor : Api::new("https://ghost-chatgpt.onrender.com"),
+            api_rx : None,
+            api_tx : None
         }
     }
 

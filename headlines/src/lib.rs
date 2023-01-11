@@ -1,11 +1,21 @@
 pub mod headlines;
 
+use std::sync::mpsc;
+
 use eframe::egui::{self, ScrollArea};
 use eframe::epi::App;
 pub use headlines::{Headlines};
 
 
 impl App for Headlines{
+
+    fn setup(&mut self, _ctx: &egui::Context, 
+        _frame: &eframe::epi::Frame, 
+        _storage: Option<&dyn eframe::epi::Storage>) {
+        
+            let (api_tx,api_rx) = mpsc::channel::<api::Payload>();
+    }
+
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &eframe::epi::Frame) {
         ctx.request_repaint();
         egui::CentralPanel::default().show(ctx, |ui| {
