@@ -111,7 +111,7 @@ impl Headlines {
 
         }
     }
-    pub async fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
+    pub  fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
         TopBottomPanel::bottom("message").show(ctx ,  |ui| {
             let mut style = (*ctx.style()).clone();
             //Adjust global font size
@@ -140,11 +140,17 @@ impl Headlines {
                             self.add_new_dialog(false,content.to_string());
                             //Loader
                             //fetch_api
-                          
-                            let reponnse = self.fetch_cursor.fetch(content.deref_mut().to_string());
-                            
+
+                            let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
-                            
+                            match bot_response {
+                                Ok(r) => {
+                                    self.add_new_dialog(true,r.bot)
+                                }
+                                Err(e) => {
+                                    self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct reponse"))
+                                }
+                            }
                             //clear text Edit -> search
                             clear_intput(content);
                         }

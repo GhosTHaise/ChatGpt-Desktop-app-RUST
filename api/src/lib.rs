@@ -10,7 +10,7 @@ pub struct Api{
 
 #[derive(Serialize,Deserialize)]
 pub struct Payload {
-    bot : String
+    pub bot : String
 }
 
 impl Api {
