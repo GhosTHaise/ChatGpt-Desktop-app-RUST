@@ -67,12 +67,21 @@ impl Headlines {
         }
     }
 
+    pub fn add_new_dialog(&self,is_bot : bool,content : String){
+        self.dialog.borrow_mut().push(
+            RefCell::new(Userbot{
+                is_bot: is_bot,
+                expose: content.to_string(),
+            })
+        );
+    }
+
     pub fn render_new_message(&self,parrent_ui : &mut eframe::egui::Ui){
         let data = self.dialog.borrow();
 
         for m in data.deref() {
             let textual_content = m.borrow();
-            let mut label = Label::new(
+            let label = Label::new(
                 RichText::new(format!("{}",textual_content.expose))
                 .text_style(egui::TextStyle::Body)) ;
             parrent_ui.add_space(10.);
@@ -80,7 +89,11 @@ impl Headlines {
                 parrent_ui.allocate_ui_with_layout(Vec2{
                     x : parrent_ui.available_width(),
                     y : 50.
-                }, egui::Layout::left_to_right(), |ui|{
+                }, if textual_content.is_bot {
+                        egui::Layout::left_to_right()
+                    }else{
+                        egui::Layout::right_to_left()
+                    }, |ui|{
                     ui.add(label);
                     //ui.set_height(50.);
                 });
@@ -117,12 +130,7 @@ impl Headlines {
                             println!("{}",content);
                             
                             
-                            self.dialog.borrow_mut().push(
-                                RefCell::new(Userbot{
-                                    is_bot: false,
-                                    expose: content.to_string(),
-                                })
-                            );
+                            self.add_new_dialog(false,content.to_string());
         
                             //clear text Edit -> search
                             clear_intput(content);
