@@ -1,7 +1,7 @@
 use std::{cell::RefCell, ops::Deref};
 
 use confy;
-use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32}};
+use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
 
 const WHITE : Color32 = Color32::from_rgb(255, 255, 255);
@@ -69,20 +69,26 @@ impl Headlines {
 
     pub fn render_new_message(&self,parrent_ui : &mut eframe::egui::Ui){
         let data = self.dialog.borrow();
+
         for m in data.deref() {
             let textual_content = m.borrow();
             let mut label = Label::new(
                 RichText::new(format!("{}",textual_content.expose))
-                .text_style(egui::TextStyle::Body));
+                .text_style(egui::TextStyle::Body)) ;
             parrent_ui.add_space(10.);
                 //ajout
-                parrent_ui.with_layout(egui::Layout::right_to_left(), |ui|{
-                     ui.add(label);
+                parrent_ui.allocate_ui_with_layout(Vec2{
+                    x : parrent_ui.available_width(),
+                    y : 50.
+                }, egui::Layout::left_to_right(), |ui|{
+                    ui.add(label);
+                    //ui.set_height(50.);
                 });
                 //end -> ajout
             parrent_ui.add_space(PADDING);
             parrent_ui.add(egui::Separator::default());
             }
+        parrent_ui.add_space(50.)
     }
     
     pub fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
@@ -101,7 +107,7 @@ impl Headlines {
                 ui.vertical_centered(|ui|{
                     let mess = ui.add_sized(
                         ui.available_size(),
-                          TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Heading)
+                          TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Body)
                         );
                         
                         if mess.changed(){
