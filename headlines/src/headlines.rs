@@ -1,9 +1,9 @@
-use std::{cell::RefCell, ops::Deref};
+use std::{cell::RefCell, ops::{Deref, DerefMut}, process::Output, future::Future};
 
 use confy;
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
-
+use api::*;
 const WHITE : Color32 = Color32::from_rgb(255, 255, 255);
 const DARK_LIGHT : Color32 = Color32::from_rgb(52, 53, 65);
 const PADDING : f32 = 5.0;
@@ -31,7 +31,7 @@ impl Default for HeadlinesConfig{
 }
 
 //Method
-fn clear_intput(mut value : &mut String){
+fn clear_intput(value : &mut String){
     value.clear();
 }
 
@@ -53,7 +53,8 @@ pub struct Headlines{
     pub config : HeadlinesConfig,
     pub api_key_initialized : bool,
     pub search :  RefCell<String>,
-    pub dialog : RefCell<Vec<RefCell<Userbot>>>
+    pub dialog : RefCell<Vec<RefCell<Userbot>>>,
+    pub fetch_cursor : Api
 }
 
 impl Headlines {
@@ -62,15 +63,16 @@ impl Headlines {
         Headlines { 
             api_key_initialized: !config.api_key.is_empty(),
             config,
-            search: RefCell::new("Ask GhosT ...".to_string()),
+            search: RefCell::new("".to_string()),
             dialog: RefCell::new(vec![]),
+            fetch_cursor : Api::new("")
         }
     }
 
     pub fn add_new_dialog(&self,is_bot : bool,content : String){
         self.dialog.borrow_mut().push(
             RefCell::new(Userbot{
-                is_bot: is_bot,
+                is_bot,
                 expose: content.to_string(),
             })
         );
@@ -90,9 +92,9 @@ impl Headlines {
                     x : parrent_ui.available_width(),
                     y : 50.
                 }, if textual_content.is_bot {
-                        egui::Layout::left_to_right()
-                    }else{
                         egui::Layout::right_to_left()
+                    }else{
+                        egui::Layout::left_to_right()
                     }, |ui|{
                     ui.add(label);
                     //ui.set_height(50.);
@@ -103,9 +105,14 @@ impl Headlines {
             }
         parrent_ui.add_space(50.)
     }
-    
-    pub fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
-        TopBottomPanel::bottom("message").show(ctx , move |ui|{
+
+    pub fn fecth_api() -> impl Future<Output = ()>{
+        async{
+
+        }
+    }
+    pub async fn render_message_bottom(&self,ctx : &Context, content : &mut String,parrent_ui : &mut Ui)-> () {
+        TopBottomPanel::bottom("message").show(ctx ,  |ui| {
             let mut style = (*ctx.style()).clone();
             //Adjust global font size
             style.text_styles = [
@@ -117,7 +124,7 @@ impl Headlines {
             ].into();
             ctx.set_style(style);
             ui.horizontal(move |ui|{
-                ui.vertical_centered(|ui|{
+                ui.vertical_centered( |ui| {
                     let mess = ui.add_sized(
                         ui.available_size(),
                           TextEdit::singleline(content ).hint_text("Ask GhosT ...").font(egui::TextStyle::Body)
@@ -131,7 +138,13 @@ impl Headlines {
                             
                             
                             self.add_new_dialog(false,content.to_string());
-        
+                            //Loader
+                            //fetch_api
+                          
+                            let reponnse = self.fetch_cursor.fetch(content.deref_mut().to_string());
+                            
+                            //preload response
+                            
                             //clear text Edit -> search
                             clear_intput(content);
                         }
