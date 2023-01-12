@@ -148,7 +148,9 @@ impl Headlines {
                             //fetch_api
                             /* -> implement to thread */
                             let cursor = Api::new("https://ghost-chatgpt.onrender.com");
+                            
                             let tx = self.api_tx.clone();
+                            
                             let reqwest = cursor.asynchrounous_fetch(content.to_string());
                             let mut  rt = Runtime::new().unwrap();
                             rt.block_on(async move {
@@ -161,7 +163,17 @@ impl Headlines {
                                 })
                                 
                             });
-
+                            
+                            if let Some(rx_receiver) = &self.api_rx{
+                                    match rx_receiver.try_recv(){
+                                        Ok(r) => {
+                                            self.add_new_dialog(true,r.bot)
+                                        }
+                                        Err(_) => {
+                                            self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct reponse"))
+                                        }
+                                    }
+                            }
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
