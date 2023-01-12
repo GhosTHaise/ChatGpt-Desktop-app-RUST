@@ -20,8 +20,8 @@ impl Api {
         }
     }
 
-    pub async fn asynchrounous_fetch(&self,prompt : String) ->  Result<Payload,ExitFailure> {
-        let url  = String::from(&self.url);
+    pub async fn asynchrounous_fetch(self,prompt : String) ->  Result<Payload,ExitFailure> {
+        let url  = String::from(self.url);
         let url = Url::parse(&url)?;
         //body
         let mut body_map_json = HashMap::new();

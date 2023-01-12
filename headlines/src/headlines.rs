@@ -1,10 +1,13 @@
-use std::{cell::RefCell, ops::{Deref, DerefMut}, process::Output, future::Future, sync::mpsc::{Receiver, Sender}};
+use std::{cell::RefCell, ops::{Deref, DerefMut}, process::Output, future::Future, sync::{mpsc::{Receiver, Sender}, Arc}};
 
 use confy;
 use std::thread;
+use std::sync::{Mutex};
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
 use api::*;
+use tokio::runtime::{self, Runtime};
+use tokio::time::*;
 const WHITE : Color32 = Color32::from_rgb(255, 255, 255);
 const DARK_LIGHT : Color32 = Color32::from_rgb(52, 53, 65);
 const PADDING : f32 = 5.0;
@@ -55,7 +58,6 @@ pub struct Headlines{
     pub api_key_initialized : bool,
     pub search :  RefCell<String>,
     pub dialog : RefCell<Vec<RefCell<Userbot>>>,
-    pub fetch_cursor : Api,
     pub api_rx : Option<Receiver<Payload>>,
     pub api_tx : Option<Sender<Payload>>
 }
@@ -68,7 +70,6 @@ impl Headlines {
             config,
             search: RefCell::new("".to_string()),
             dialog: RefCell::new(vec![]),
-            fetch_cursor : Api::new("https://ghost-chatgpt.onrender.com"),
             api_rx : None,
             api_tx : None
         }
@@ -145,10 +146,22 @@ impl Headlines {
                             self.add_new_dialog(false,content.to_string());
                             //Loader
                             //fetch_api
-                            /* -> implement to thread */let response = self.fetch_cursor.asynchrounous_fetch(content.to_string());
-                            thread::spawn(move||async{
+                            /* -> implement to thread */
+                            let cursor = Api::new("https://ghost-chatgpt.onrender.com");
+                            let tx = self.api_tx.clone();
+                            let reqwest = cursor.asynchrounous_fetch(content.to_string());
+                            let mut  rt = Runtime::new().unwrap();
+                            rt.block_on(async move {
+                                tokio::spawn(async {
+                                    let response_body_parsed = reqwest.await.unwrap();
+                                    if let Some(tx_sender) = tx{
+                                        print!("{:?}",response_body_parsed);
+                                        tx_sender.send(response_body_parsed);
+                                    }
+                                })
                                 
                             });
+
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
