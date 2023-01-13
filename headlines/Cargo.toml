@@ -9,6 +9,7 @@ edition = "2021"
 api = {path = "../api"}
 egui_glow = "0.19.0"
 tokio = { version = "0.2.22", features = ["full"] }
+async-std = { version = "1", features = ["attributes", "tokio1"] }
 eframe = {version = "0.17.0" , features = ["persistence"]}      
 tracing = "0.1.36"
 tracing-subscriber = "0.3.15"    
