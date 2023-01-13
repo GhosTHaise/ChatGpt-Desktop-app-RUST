@@ -6,8 +6,7 @@ use std::sync::{Mutex};
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
 use api::*;
-use tokio::runtime::{self, Runtime};
-use tokio::time::*;
+use tokio::runtime::{ Runtime};
 const WHITE : Color32 = Color32::from_rgb(255, 255, 255);
 const DARK_LIGHT : Color32 = Color32::from_rgb(52, 53, 65);
 const PADDING : f32 = 5.0;
@@ -151,9 +150,8 @@ impl Headlines {
                             /* -> implement to thread */
                             
                             let tx = self.api_tx.clone();
-                            
-                            
-                            self.fetch_sync("blablabal".to_string(),ctx.clone());
+                            let api_cursor = Api::new("",&self.rt);
+                            api_cursor.direct_fetch("blablabal".to_string());
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
@@ -188,7 +186,7 @@ impl Headlines {
         });
     }   
     
-    fn fetch_sync(&self,content : String,ctx : egui::Context){
+    /* fn fetch_sync(&self,content : String,ctx : egui::Context){
     
         //let mut  rt = Runtime::new().unwrap();
            self.rt.borrow_mut().block_on(async move {
@@ -203,7 +201,7 @@ impl Headlines {
                        ctx.request_repaint();
                 });
            });
-   }
+   } */
 }
 
 

@@ -1,13 +1,13 @@
-use std::{string, collections::HashMap};
+use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut};
 
 use reqwest::{Url};
 use serde_json::json;
 use ureq::{self, request};
 use serde::{Serialize,Deserialize};
 use exitfailure::{self, ExitFailure};
-use std::ops::Deref;
-pub struct Api{
-    url : String
+pub struct Api<'a>{
+    url : String,
+    rt : &'a RefCell<tokio::runtime::Runtime>
 }
 
 #[derive(Serialize,Deserialize,Debug)]
@@ -21,7 +21,7 @@ pub struct Payload {
 pub struct Choice{
         pub text: String,
         index: i32,
-        logprobs: serde_json::Value,
+        logprobs: f32,
         finish_reason: String
 }
 
@@ -43,10 +43,11 @@ pub struct DirectPayload{
 }
 
 
-impl Api {
-    pub fn new(url : &str) -> Api {
+impl Api<'_> {
+    pub fn new<'a>(url : &'a str,rt : &'a RefCell<tokio::runtime::Runtime>) -> Api<'a> {
         Api{
-            url : String::from(url)
+            url : String::from(url),
+            rt 
         }
     }
 
@@ -84,26 +85,33 @@ impl Api {
         println!("{:?}",response);
         Ok(response)
     }
-    pub async fn direct_fetch(prompt : String) -> Result<DirectPayload,ExitFailure>{
+    
+    pub  fn direct_fetch(&self,prompt : String) -> (){
         let body_json = json!({
             "model": "text-davinci-003",
             "prompt": "write code to say hello world in rust",
-            "temperature": 0,
-            "max_tokens": 3000,
-            "top_p": 1,
+            "temperature": 0i32,
+            "max_tokens": 3000i32,
+            "top_p": 1i32,
             "stream": false,
-            "frequency_penalty": 0.5,
-            "presence_penalty": 0
+            "frequency_penalty": 0.5f32,
+            "presence_penalty": 0i32
         });
-        let client = reqwest::Client::new();
-        println!("Direct fetch init");
-        let request = client.post("https://api.openai.com/v1/completions")
-        .json(&body_json)
-        .send();
-        println!("Direct fetch have response");
-        let response = request.await?.json::<DirectPayload>().await?;
-        println!("Parsed response : {:?}",response);
-        Ok(response)
+        self.rt.borrow_mut().block_on(async move{
+            tokio::spawn(async move {
+                
+                let client = reqwest::Client::new();
+                println!("Direct fetch init");
+                let request = client.post("https://api.openai.com/v1/completions")
+                .json(&body_json)
+                .send();
+                println!("Direct fetch have response");
+                let fetched_data = request.await.expect("Error to fetched data");
+                println!("Found data : {:?}",fetched_data);
+                
+            });
+        });
+        
     }
     #[cfg(test)]
     fn get_status(){
