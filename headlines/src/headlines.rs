@@ -59,11 +59,12 @@ pub struct Headlines{
     pub search :  RefCell<String>,
     pub dialog : RefCell<Vec<RefCell<Userbot>>>,
     pub api_rx : Option<Receiver<DirectPayload>>,
-    pub api_tx : Option<Sender<DirectPayload>>
+    pub api_tx : Option<Sender<DirectPayload>>,
+    rt: Runtime
 }
 
 impl Headlines {
-    pub fn new() -> Headlines {
+    pub fn new(rt : tokio::runtime::Runtime) -> Headlines {
         let config : HeadlinesConfig = confy::load("headlines").unwrap_or_default();
         Headlines { 
             api_key_initialized: !config.api_key.is_empty(),
@@ -71,7 +72,8 @@ impl Headlines {
             search: RefCell::new("".to_string()),
             dialog: RefCell::new(vec![]),
             api_rx : None,
-            api_tx : None
+            api_tx : None,
+            rt
         }
     }
 
@@ -151,7 +153,7 @@ impl Headlines {
                             let tx = self.api_tx.clone();
                             
                             
-                            fetch_sync("blablabal".to_string(),ctx.clone());
+                            self.fetch_sync("blablabal".to_string(),ctx.clone());
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
@@ -186,13 +188,11 @@ impl Headlines {
         });
     }   
     
-
-}
-
-fn fetch_sync(content : String,ctx : egui::Context){
+    fn fetch_sync(&self,content : String,ctx : egui::Context){
     
-     //let mut  rt = Runtime::new().unwrap();
-        tokio::spawn( async move {
+        //let mut  rt = Runtime::new().unwrap();
+           self.rt.enter(||{
+            tokio::spawn( async move {
                 let reqwest = Api::direct_fetch(content.to_string());
                 print!("Async request sent");
                 let response_body_parsed = reqwest.await.unwrap();
@@ -202,5 +202,9 @@ fn fetch_sync(content : String,ctx : egui::Context){
                 //    }
                     ctx.request_repaint();
                 });
+           })
+   }
 }
+
+
 
