@@ -60,11 +60,11 @@ pub struct Headlines{
     pub dialog : RefCell<Vec<RefCell<Userbot>>>,
     pub api_rx : Option<Receiver<DirectPayload>>,
     pub api_tx : Option<Sender<DirectPayload>>,
-    rt: Runtime
+    rt: RefCell<Runtime>
 }
 
 impl Headlines {
-    pub fn new(rt : tokio::runtime::Runtime) -> Headlines {
+    pub fn new(rt : RefCell<tokio::runtime::Runtime>) -> Headlines {
         let config : HeadlinesConfig = confy::load("headlines").unwrap_or_default();
         Headlines { 
             api_key_initialized: !config.api_key.is_empty(),
@@ -191,18 +191,18 @@ impl Headlines {
     fn fetch_sync(&self,content : String,ctx : egui::Context){
     
         //let mut  rt = Runtime::new().unwrap();
-           self.rt.enter(||{
-            tokio::spawn( async move {
-                let reqwest = Api::direct_fetch(content.to_string());
-                print!("Async request sent");
-                let response_body_parsed = reqwest.await.unwrap();
-                //if let Some(tx_sender) = tx{
-                    println!("{:?}",response_body_parsed);
-                //        tx_sender.send(response_body_parsed);
-                //    }
-                    ctx.request_repaint();
+           self.rt.borrow_mut().block_on(async move {
+                tokio::spawn( async move {
+                    let reqwest = Api::direct_fetch(content.to_string());
+                   print!("Async request sent");
+                   let response_body_parsed = reqwest.await.unwrap();
+                   //if let Some(tx_sender) = tx{
+                       println!("{:?}",response_body_parsed);
+                   //        tx_sender.send(response_body_parsed);
+                   //    }
+                       ctx.request_repaint();
                 });
-           })
+           });
    }
 }
 

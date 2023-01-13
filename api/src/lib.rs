@@ -96,12 +96,13 @@ impl Api {
             "presence_penalty": 0
         });
         let client = reqwest::Client::new();
+        println!("Direct fetch init");
         let request = client.post("https://api.openai.com/v1/completions")
         .json(&body_json)
         .send();
-
+        println!("Direct fetch have response");
         let response = request.await?.json::<DirectPayload>().await?;
-        
+        println!("Parsed response : {:?}",response);
         Ok(response)
     }
     #[cfg(test)]
