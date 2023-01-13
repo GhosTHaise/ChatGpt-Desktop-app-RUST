@@ -58,8 +58,8 @@ pub struct Headlines{
     pub api_key_initialized : bool,
     pub search :  RefCell<String>,
     pub dialog : RefCell<Vec<RefCell<Userbot>>>,
-    pub api_rx : Option<Receiver<Payload>>,
-    pub api_tx : Option<Sender<Payload>>
+    pub api_rx : Option<Receiver<DirectPayload>>,
+    pub api_tx : Option<Sender<DirectPayload>>
 }
 
 impl Headlines {
@@ -147,33 +147,23 @@ impl Headlines {
                             //Loader
                             //fetch_api
                             /* -> implement to thread */
-                            let cursor = Api::new("https://ghost-chatgpt.onrender.com");
                             
                             let tx = self.api_tx.clone();
                             
-                            let reqwest = cursor.asynchrounous_fetch(content.to_string());
+                            let reqwest = Api::direct_fetch(content.to_string());
                             let mut  rt = Runtime::new().unwrap();
                             rt.block_on(async move {
                                 tokio::spawn(async {
+                                    print!("Async request sent");
                                     let response_body_parsed = reqwest.await.unwrap();
                                     if let Some(tx_sender) = tx{
-                                        print!("{:?}",response_body_parsed);
+                                        println!("{:?}",response_body_parsed);
                                         tx_sender.send(response_body_parsed);
                                     }
                                 })
                                 
                             });
                             
-                            if let Some(rx_receiver) = &self.api_rx{
-                                    match rx_receiver.try_recv(){
-                                        Ok(r) => {
-                                            self.add_new_dialog(true,r.bot)
-                                        }
-                                        Err(_) => {
-                                            self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct reponse"))
-                                        }
-                                    }
-                            }
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
@@ -187,6 +177,19 @@ impl Headlines {
                             } */
                             //clear text Edit -> search
                             clear_intput(content);
+                        }
+
+                        if let Some(rx_receiver) = &self.api_rx{
+                            match rx_receiver.try_recv(){
+                                Ok(r) => {
+                                    if let Some(answer) = r.choices.iter().nth(1){
+                                        self.add_new_dialog(true, String::from(&answer.text))
+                                    }
+                                }
+                                Err(_) => {
+                                    self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct response"))
+                                }
+                            }
                         }
                 });
                 
