@@ -150,20 +150,8 @@ impl Headlines {
                             
                             let tx = self.api_tx.clone();
                             
-                            let reqwest = Api::direct_fetch(content.to_string());
-                            let mut  rt = Runtime::new().unwrap();
-                            rt.block_on(async move {
-                                tokio::spawn(async {
-                                    print!("Async request sent");
-                                    let response_body_parsed = reqwest.await.unwrap();
-                                    if let Some(tx_sender) = tx{
-                                        println!("{:?}",response_body_parsed);
-                                        tx_sender.send(response_body_parsed);
-                                    }
-                                })
-                                
-                            });
                             
+                            fetch_sync("blablabal".to_string(),ctx.clone());
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
@@ -201,4 +189,18 @@ impl Headlines {
 
 }
 
+fn fetch_sync(content : String,ctx : egui::Context){
+    
+     //let mut  rt = Runtime::new().unwrap();
+        tokio::spawn( async move {
+                let reqwest = Api::direct_fetch(content.to_string());
+                print!("Async request sent");
+                let response_body_parsed = reqwest.await.unwrap();
+                //if let Some(tx_sender) = tx{
+                    println!("{:?}",response_body_parsed);
+                //        tx_sender.send(response_body_parsed);
+                //    }
+                    ctx.request_repaint();
+                });
+}
 
