@@ -14,7 +14,8 @@ impl App for Headlines{
         _storage: Option<&dyn eframe::epi::Storage>) {
         
         let (api_tx,api_rx) = mpsc::channel::<api::Payload>();
-        
+        self.api_rx = Some(api_rx);
+        self.api_tx = Some(api_tx);
     }
 
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &eframe::epi::Frame) {

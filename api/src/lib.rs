@@ -1,4 +1,4 @@
-use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut};
+use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut, sync::mpsc::Sender};
 
 use reqwest::{Url};
 use serde_json::json;
@@ -8,7 +8,8 @@ use exitfailure::{self, ExitFailure};
 use futures::future::{self, ok};
 pub struct Api<'a>{
     url : String,
-    rt : &'a RefCell<tokio::runtime::Runtime>
+    rt : &'a RefCell<tokio::runtime::Runtime>,
+    api_tx : Sender<Payload>
 }
 
 #[derive(Serialize,Deserialize,Debug)]
@@ -45,10 +46,11 @@ pub struct DirectPayload{
 
 
 impl Api<'_> {
-    pub fn new<'a>(url : &'a str,rt : &'a RefCell<tokio::runtime::Runtime>) -> Api<'a> {
+    pub fn new<'a>(url : &'a str,rt : &'a RefCell<tokio::runtime::Runtime>,api_tx : Sender<Payload>) -> Api<'a> {
         Api{
             url : String::from(url),
-            rt 
+            rt,
+            api_tx 
         }
     }
 
@@ -71,7 +73,8 @@ impl Api<'_> {
                     .json::<Payload>()
                     .await.expect("No json matched")
                     ;
-                println!("Payload fetched : {:?}",response);    
+                println!("Payload fetched : {:?}",response); 
+                //self.api_tx.send(response);   
             });
         });
     }

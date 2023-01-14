@@ -1,7 +1,6 @@
-use std::{cell::RefCell, ops::{Deref, DerefMut}, process::Output, future::Future, sync::{mpsc::{Receiver, Sender}, Arc}};
+use std::{cell::RefCell, ops::{Deref, }, future::Future, sync::{mpsc::{Receiver, Sender}, Arc}};
 
 use confy;
-use std::thread;
 use std::sync::{Mutex};
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
@@ -57,8 +56,8 @@ pub struct Headlines{
     pub api_key_initialized : bool,
     pub search :  RefCell<String>,
     pub dialog : RefCell<Vec<RefCell<Userbot>>>,
-    pub api_rx : Option<Receiver<DirectPayload>>,
-    pub api_tx : Option<Sender<DirectPayload>>,
+    pub api_rx : Option<Receiver<Payload>>,
+    pub api_tx : Option<Sender<Payload>>,
     rt: RefCell<Runtime>
 }
 
@@ -149,11 +148,15 @@ impl Headlines {
                             //fetch_api
                             /* -> implement to thread */
                             
-                            let tx = self.api_tx.clone();
-                            let api_cursor = Api::new("",&self.rt);
-                            
+                             if let Some(tx) = self.api_tx.clone(){
+                                    let api_cursor = Api::new("",&self.rt,tx);
+                                    api_cursor.asynchrounous_fetch(content.to_string());
+                             }else{
+                                println!("No channel open");
+                             }
+
                             //start reqwest async  thread
-                            api_cursor.asynchrounous_fetch(content.to_string());
+                            
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
@@ -165,22 +168,21 @@ impl Headlines {
                                     self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct reponse"))
                                 }
                             } */
+                            
                             //clear text Edit -> search
                             clear_intput(content);
                         }
-
                         if let Some(rx_receiver) = &self.api_rx{
-                            match rx_receiver.try_recv(){
+                            match rx_receiver.recv(){
                                 Ok(r) => {
-                                    if let Some(answer) = r.choices.iter().nth(1){
-                                        self.add_new_dialog(true, String::from(&answer.text))
-                                    }
+                                    self.add_new_dialog(true, String::from(r.bot))
                                 }
                                 Err(_) => {
                                     self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct response"))
                                 }
                             }
                         }
+
                 });
                 
             });
