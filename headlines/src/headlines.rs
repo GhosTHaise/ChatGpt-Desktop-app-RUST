@@ -1,7 +1,7 @@
-use std::{cell::RefCell, ops::{Deref, }, future::Future, sync::{mpsc::{Receiver, Sender}, Arc}};
+use std::{cell::RefCell, ops::{Deref}, future::Future};
 
 use confy;
-use std::sync::{Mutex};
+use tokio::sync::mpsc::{Receiver,Sender};
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
 use api::*;
@@ -58,7 +58,7 @@ pub struct Headlines{
     pub dialog : RefCell<Vec<RefCell<Userbot>>>,
     pub api_rx : Option<Receiver<Payload>>,
     pub api_tx : Option<Sender<Payload>>,
-    rt: RefCell<Runtime>
+    pub rt: RefCell<Runtime>
 }
 
 impl Headlines {
@@ -172,16 +172,7 @@ impl Headlines {
                             //clear text Edit -> search
                             clear_intput(content);
                         }
-                        if let Some(rx_receiver) = &self.api_rx{
-                            match rx_receiver.recv(){
-                                Ok(r) => {
-                                    self.add_new_dialog(true, String::from(r.bot))
-                                }
-                                Err(_) => {
-                                    self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct response"))
-                                }
-                            }
-                        }
+                        
 
                 });
                 

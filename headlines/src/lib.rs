@@ -1,6 +1,6 @@
 pub mod headlines;
 
-use std::sync::mpsc;
+use tokio::sync::mpsc;
 
 use eframe::egui::{self, ScrollArea};
 use eframe::epi::App;
@@ -13,9 +13,18 @@ impl App for Headlines{
         _frame: &eframe::epi::Frame, 
         _storage: Option<&dyn eframe::epi::Storage>) {
         
-        let (api_tx,api_rx) = mpsc::channel::<api::Payload>();
-        self.api_rx = Some(api_rx);
+        let (api_tx,mut api_rx) = mpsc::channel::<api::Payload>(100);
+        let rcv = api_rx.recv();
+        //self.api_rx = Some(api_rx);
         self.api_tx = Some(api_tx);
+        self.rt.borrow_mut().block_on(async move{
+            match rcv.await{
+                Some(value_passed) => println!("I got a value : {:?}",value_passed),
+                None => println!("none is passed inside thread"),
+            }
+        });
+        
+
     }
 
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &eframe::epi::Frame) {

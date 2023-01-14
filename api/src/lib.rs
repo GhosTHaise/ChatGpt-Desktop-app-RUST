@@ -1,4 +1,4 @@
-use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut, sync::mpsc::Sender};
+use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut};
 
 use reqwest::{Url};
 use serde_json::json;
@@ -6,6 +6,7 @@ use ureq::{self, request};
 use serde::{Serialize,Deserialize};
 use exitfailure::{self, ExitFailure};
 use futures::future::{self, ok};
+use tokio::sync::mpsc::Sender;
 pub struct Api<'a>{
     url : String,
     rt : &'a RefCell<tokio::runtime::Runtime>,
