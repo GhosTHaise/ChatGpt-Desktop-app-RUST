@@ -5,7 +5,7 @@ use serde_json::json;
 use ureq::{self, request};
 use serde::{Serialize,Deserialize};
 use exitfailure::{self, ExitFailure};
-use futures::future;
+use futures::future::{self, ok};
 pub struct Api<'a>{
     url : String,
     rt : &'a RefCell<tokio::runtime::Runtime>
@@ -52,26 +52,32 @@ impl Api<'_> {
         }
     }
 
-    pub async fn asynchrounous_fetch(self,prompt : String) ->  Result<Payload,ExitFailure> {
-        let url  = String::from(self.url);
-        let url = Url::parse(&url)?;
+    pub fn asynchrounous_fetch(self,prompt : String) -> (){
+        //let url  = String::from(self.url);
+        //let url = Url::parse(&url)?;
         //body
-        let mut body_map_json = HashMap::new();
-        body_map_json.insert("prompt", prompt);
+        let body_json = json!({
+            "prompt" : prompt
+        });
         //fetch api
-        let client = reqwest::Client::new();
-        let response  = client
+        self.rt.borrow_mut().block_on(async move{
+            tokio::spawn(async move {
+                let client = reqwest::Client::new();
+                let response  = client
                     .post("https://ghost-chatgpt.onrender.com")
-                    .json(&body_map_json)
+                    .json(&body_json)
                     .send()
-                    .await?
+                    .await.expect("unable to send request body")
                     .json::<Payload>()
-                    .await?
+                    .await.expect("No json matched")
                     ;
-        Ok(response)    
+                println!("Payload fetched : {:?}",response);    
+            });
+        });
     }
 
     pub fn fetch(&self,prompt : String) -> Result<Payload,ExitFailure>{
+        println!("Fetch Init");
         let reqwest = ureq::post(&self.url)
         .set("Content-Type","application/json")
         .set("Connection","keep-alive")
@@ -79,15 +85,18 @@ impl Api<'_> {
             ureq::json!({
                 "propmt" : prompt
             })
-        )?;
+        ).expect("No request found");
         //parameter reqwest
         //end -> parameter
-        let response : Payload = reqwest.into_json()?;
+        println!("Get response :");
+        let response : Payload = reqwest.into_json().expect("Unable Deserialize data");
         println!("{:?}",response);
+
         Ok(response)
     }
     
     pub  fn direct_fetch(&self,prompt : String) -> (){
+        //need to add api key to header as authorization
         let body_json = json!({
             "model": "text-davinci-003",
             "prompt": "write code to say hello world in rust",

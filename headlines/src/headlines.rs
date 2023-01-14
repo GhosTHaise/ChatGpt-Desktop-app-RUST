@@ -151,7 +151,9 @@ impl Headlines {
                             
                             let tx = self.api_tx.clone();
                             let api_cursor = Api::new("",&self.rt);
-                            api_cursor.direct_fetch("blablabal".to_string());
+                            
+                            //start reqwest async  thread
+                            api_cursor.asynchrounous_fetch(content.to_string());
                             /* let bot_response = self.fetch_cursor.fetch(content.to_string());
                             //preload response
                             match bot_response {
