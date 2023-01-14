@@ -5,6 +5,7 @@ use serde_json::json;
 use ureq::{self, request};
 use serde::{Serialize,Deserialize};
 use exitfailure::{self, ExitFailure};
+use futures::future;
 pub struct Api<'a>{
     url : String,
     rt : &'a RefCell<tokio::runtime::Runtime>
