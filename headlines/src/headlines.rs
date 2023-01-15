@@ -1,7 +1,6 @@
-use std::{cell::RefCell, ops::{Deref}, future::Future};
+use std::{cell::RefCell, ops::{Deref}, future::Future, sync::mpsc::{Receiver, Sender}};
 
 use confy;
-use tokio::sync::mpsc::{Receiver,Sender};
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
 use serde::{Serialize,Deserialize};
 use api::*;
@@ -168,7 +167,8 @@ impl Headlines {
                                     self.add_new_dialog(true, String::from("Sorry , I am Unable to give you a correct reponse"))
                                 }
                             } */
-                            
+
+
                             //clear text Edit -> search
                             clear_intput(content);
                         }
@@ -178,7 +178,9 @@ impl Headlines {
                 
             });
             ui.add_space(1.);
+            
         });
+        
     }   
     
     /* fn fetch_sync(&self,content : String,ctx : egui::Context){

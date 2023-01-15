@@ -1,6 +1,8 @@
 pub mod headlines;
 
-use tokio::sync::mpsc;
+
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
 
 use eframe::egui::{self, ScrollArea};
 use eframe::epi::App;
@@ -13,22 +15,31 @@ impl App for Headlines{
         _frame: &eframe::epi::Frame, 
         _storage: Option<&dyn eframe::epi::Storage>) {
         
-        let (api_tx,mut api_rx) = mpsc::channel::<api::Payload>(100);
-        let rcv = api_rx.recv();
+        let (api_tx,api_rx) = mpsc::channel::<api::Payload>();
+        
         //self.api_rx = Some(api_rx);
         self.api_tx = Some(api_tx);
-        self.rt.borrow_mut().block_on(async move{
-            match rcv.await{
-                Some(value_passed) => println!("I got a value : {:?}",value_passed),
-                None => println!("none is passed inside thread"),
+        
+        let add_strapped = |is_bot,content| self.add_new_dialog(is_bot, content);
+        let safe_add = Arc::new(Mutex::new(add_strapped));
+        let api_rcv_safe = Arc::new(Mutex::new(&api_rx));
+        thread::spawn( move || {
+            loop{
+                match api_rcv_safe.lock().unwrap().try_recv(){
+                    Ok(v) => {
+                        //let data = v.bot;
+                        //safe_add.lock().unwrap()(true,String::from(""));
+                    },
+                    Err(_) => todo!(),
+                }
             }
         });
-        
 
     }
 
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &eframe::epi::Frame) {
         ctx.request_repaint();
+        
         egui::CentralPanel::default().show(ctx, |ui| {
            ui.vertical_centered_justified(|ui|{
                 ui.heading("GhosT - Ai")

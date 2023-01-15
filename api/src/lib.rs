@@ -1,4 +1,4 @@
-use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut};
+use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut, sync::mpsc::Sender};
 
 use reqwest::{Url};
 use serde_json::json;
@@ -6,7 +6,6 @@ use ureq::{self, request};
 use serde::{Serialize,Deserialize};
 use exitfailure::{self, ExitFailure};
 use futures::future::{self, ok};
-use tokio::sync::mpsc::Sender;
 pub struct Api<'a>{
     url : String,
     rt : &'a RefCell<tokio::runtime::Runtime>,
@@ -75,7 +74,9 @@ impl Api<'_> {
                     .await.expect("No json matched")
                     ;
                 println!("Payload fetched : {:?}",response); 
-                //self.api_tx.send(response);   
+                if  let Err(e)= self.api_tx.send(response){
+                    println!("Unable to send value , {:?}",e);
+                } 
             });
         });
     }
