@@ -22,12 +22,14 @@ impl App for Headlines{
         
         let add_strapped = |is_bot,content| self.add_new_dialog(is_bot, content);
         let safe_add = Arc::new(Mutex::new(add_strapped));
-        let api_rcv_safe = Arc::new(Mutex::new(&api_rx));
+        let api_rcv_safe = Arc::new(Mutex::new(api_rx));
+        
         thread::spawn( move || {
             loop{
                 match api_rcv_safe.lock().unwrap().try_recv(){
                     Ok(v) => {
                         //let data = v.bot;
+                        println!("i get : ,{:?}",v.bot);
                         //safe_add.lock().unwrap()(true,String::from(""));
                     },
                     Err(_) => todo!(),
