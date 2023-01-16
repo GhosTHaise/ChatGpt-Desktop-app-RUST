@@ -1,4 +1,4 @@
-use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut, sync::mpsc::Sender};
+use std::{string, collections::HashMap, cell::RefCell, borrow::BorrowMut, sync::{mpsc::Sender, Arc, Mutex}};
 
 use reqwest::{Url};
 use serde_json::json;
@@ -17,6 +17,12 @@ pub struct Payload {
     pub bot : String
 }
 
+
+#[derive(Serialize,Deserialize,Debug)]
+pub struct Userbot{
+    pub is_bot : bool,
+    pub expose : String
+}
 
 #[derive(Serialize,Deserialize,Debug,Clone)]
 
@@ -54,14 +60,16 @@ impl Api<'_> {
         }
     }
 
-    pub fn asynchrounous_fetch(self,prompt : String) -> (){
+    pub fn asynchrounous_fetch(self,prompt : String,mut container : &Arc<Mutex<RefCell<Vec<RefCell<Userbot>>>>>) -> (){
         //let url  = String::from(self.url);
         //let url = Url::parse(&url)?;
         //body
         let body_json = json!({
             "prompt" : prompt
         });
+        //let arc_share = Arc::new(Mutex::new(container)).clone();
         //fetch api
+        let cnt = container.to_owned();
         self.rt.borrow_mut().block_on(async move{
             tokio::spawn(async move {
                 let client = reqwest::Client::new();
@@ -73,10 +81,15 @@ impl Api<'_> {
                     .json::<Payload>()
                     .await.expect("No json matched")
                     ;
+                    
                 println!("Payload fetched : {:?}",response); 
-                if  let Err(e)= self.api_tx.send(response){
-                    println!("Unable to send value , {:?}",e);
-                } 
+                cnt.lock().unwrap().borrow_mut().take().push(RefCell::new(Userbot{
+                    is_bot: true,
+                    expose: response.bot,
+                }))
+                /* if  let Err(e)= self.api_tx.send(response){
+                    println!("Unable to send value , {:?}",e.to_string());
+                }  */
             });
         });
     }

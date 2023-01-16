@@ -17,14 +17,14 @@ impl App for Headlines{
         
         let (api_tx,api_rx) = mpsc::channel::<api::Payload>();
         
-        //self.api_rx = Some(api_rx);
+        self.api_rx = Some(api_rx);
         self.api_tx = Some(api_tx);
         
         let add_strapped = |is_bot,content| self.add_new_dialog(is_bot, content);
         let safe_add = Arc::new(Mutex::new(add_strapped));
-        let api_rcv_safe = Arc::new(Mutex::new(api_rx));
+        //let api_rcv_safe = Arc::new(Mutex::new(api_rx));
         
-        thread::spawn( move || {
+        /* thread::spawn( move || {
             loop{
                 match api_rcv_safe.lock().unwrap().try_recv(){
                     Ok(v) => {
@@ -35,7 +35,9 @@ impl App for Headlines{
                     Err(_) => todo!(),
                 }
             }
-        });
+        }); */
+
+        
 
     }
 
@@ -52,6 +54,9 @@ impl App for Headlines{
            });
            self.render_message_bottom(ctx,&mut self.search.borrow_mut(), ui);
        });
+       let api_rx_cursor = Arc::new(Mutex::new(self.api_rx.as_ref()));
+       let shared = Arc::clone(&api_rx_cursor);
+       
     }
 
     fn name(&self) -> &str {

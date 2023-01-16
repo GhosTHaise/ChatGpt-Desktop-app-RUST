@@ -1,4 +1,5 @@
-use std::{cell::RefCell, ops::{Deref}, future::Future, sync::mpsc::{Receiver, Sender}};
+use std::{cell::RefCell, ops::{Deref}, future::Future, sync::{mpsc::{Receiver, Sender}, Arc, Mutex}};
+
 
 use confy;
 use eframe::{egui::{Context, TopBottomPanel,TextEdit, output, self, TextStyle, Label, RichText, Ui, }, epaint::{FontId, Color32, Vec2}};
@@ -20,10 +21,7 @@ pub struct NewBotResponse{
     bot : String
 }
 
-pub struct Userbot{
-    pub is_bot : bool,
-    pub expose : String
-}
+
 
 impl Default for HeadlinesConfig{
     fn default() -> Self {
@@ -54,7 +52,7 @@ pub struct Headlines{
     pub config : HeadlinesConfig,
     pub api_key_initialized : bool,
     pub search :  RefCell<String>,
-    pub dialog : RefCell<Vec<RefCell<Userbot>>>,
+    pub dialog : Arc<Mutex<RefCell<Vec<RefCell<Userbot>>>>>,
     pub api_rx : Option<Receiver<Payload>>,
     pub api_tx : Option<Sender<Payload>>,
     pub rt: RefCell<Runtime>
@@ -67,7 +65,7 @@ impl Headlines {
             api_key_initialized: !config.api_key.is_empty(),
             config,
             search: RefCell::new("".to_string()),
-            dialog: RefCell::new(vec![]),
+            dialog: Arc::new(Mutex::new(RefCell::new(vec![]))),
             api_rx : None,
             api_tx : None,
             rt
@@ -75,7 +73,7 @@ impl Headlines {
     }
 
     pub fn add_new_dialog(&self,is_bot : bool,content : String){
-        self.dialog.borrow_mut().push(
+        self.dialog.lock().unwrap().borrow_mut().push(
             RefCell::new(Userbot{
                 is_bot,
                 expose: content.to_string(),
@@ -84,9 +82,9 @@ impl Headlines {
     }
 
     pub fn render_new_message(&self,parrent_ui : &mut eframe::egui::Ui){
-        let data = self.dialog.borrow();
+        let data = self.dialog.lock().unwrap();
 
-        for m in data.deref() {
+        for m in data.borrow().deref() {
             let textual_content = m.borrow();
             let label = Label::new(
                 RichText::new(format!("{}",textual_content.expose))
@@ -149,7 +147,8 @@ impl Headlines {
                             
                              if let Some(tx) = self.api_tx.clone(){
                                     let api_cursor = Api::new("",&self.rt,tx);
-                                    api_cursor.asynchrounous_fetch(content.to_string());
+                                    let clone = &self.dialog.clone();
+                                    api_cursor.asynchrounous_fetch(content.to_string(),clone);
                              }else{
                                 println!("No channel open");
                              }
